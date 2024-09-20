@@ -31,7 +31,7 @@ public class TransactionController {
         // 서비스 층 구매 처리
         // 미국 주식을 구매
         if("US".equals(request.getMarketType())){
-          result = this.TransactionService.createUsStockTransaction(request);
+          result = this.TransactionService.createUsStockPurchaseTransaction(request);
         }
 
 

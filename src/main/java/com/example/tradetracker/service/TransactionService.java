@@ -26,7 +26,7 @@ public class TransactionService {
     private final PortfolioUsdRepository portfolioUsdRepository;
 
     // 주식 매수
-    public TransactionResponseDto createUsStockTransaction (TransactionRequestDto request) {
+    public TransactionResponseDto createUsStockPurchaseTransaction (TransactionRequestDto request) {
         Long userId = 1L; // 임의의 사용자 ID 설정
         BigDecimal totalPurchaseAmount;  // 총 매수 금액
         BigDecimal transactionFee;       // 수수료
