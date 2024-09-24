@@ -17,8 +17,9 @@ public class PortfolioUsdEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id")
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "fk_user"))
+    private UserEntity user;
 
     @Column(name = "stock_name", nullable = false)
     private String stockName;

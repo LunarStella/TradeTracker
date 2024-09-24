@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,7 +22,7 @@ public class TransactionUsdEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "fk_user"))
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
@@ -31,19 +32,19 @@ public class TransactionUsdEntity {
     @Column(name = "stock_name", nullable = false)
     private String stockName;
 
-    @Column(name = "transaction_price", nullable = false)
+    @Column(name = "transaction_price", nullable = false, precision = 10, scale = 4)
     private BigDecimal transactionPrice;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
     @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
 
-    @Column(name = "total_amount", nullable = false)
+    @Column(name = "total_amount", nullable = false, precision = 10, scale = 4)
     private BigDecimal totalAmount;
 
-    @Column(name = "transaction_fee", nullable = false)
+    @Column(name = "transaction_fee", nullable = false, precision = 10, scale = 4)
     private BigDecimal transactionFee;
 
     @Column(name = "created_at", updatable = false)
@@ -53,8 +54,6 @@ public class TransactionUsdEntity {
     @Column(name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    // Getters and Setters
 
     public enum TransactionType {
         BUY, SELL
