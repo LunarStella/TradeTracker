@@ -68,30 +68,30 @@ public class TransactionCalculator {
     }
 
 
-    //포토폴리오에 존재하는 기존 주식에 매수한 주식 개수 더하기
+    //포토폴리오에 주식 증가 후 주식 개수 더하기
     public void calculatePortfolioIncreaseTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
         this.portfolioUpdatedTotalQuantity = portfolioTotalQuantity + transactionStockQuantity;
     }
 
-    //포토폴리오에 존재하는 기존 주식에 매수한 주식 총 금액 더하기
+    //포토폴리오에 주식 증가 후 주식 총 금액 더하기
     public void calculatePortfolioIncreaseTotalAmount(BigDecimal portfolioTotalAmount) {
         this.portfolioUpdatedTotalAmount = portfolioTotalAmount.add(this.totalExecutedAmount);
+    }
+
+    // 포트폴리오에 주식 감소 후 주식 개수 구하기
+    public void calculatePortfolioDecreaseTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
+        this.portfolioUpdatedTotalQuantity = portfolioTotalQuantity - transactionStockQuantity; // 매도한 주식 수만큼 차감
+    }
+
+    // 포토폴리오에 주식 감소 후 총 금액 구하기
+    public void calculatePortfolioDecreaseTotalAmount(BigDecimal portfolioTotalAmount) {
+        this.portfolioUpdatedTotalAmount = portfolioTotalAmount.subtract(this.totalExecutedAmount);
     }
 
     // 포토폴리오 주식 평단가 구하기
     public void calculatePortfolioUpdatedAveragePrice() {
         this.portfolioUpdatedAveragePrice = this.portfolioUpdatedTotalAmount.divide(BigDecimal.valueOf(this.portfolioUpdatedTotalQuantity),
                 RoundingMode.HALF_UP);
-    }
-
-    // 포트폴리오에서 매도 후 남은 주식 개수 계산
-    public void calculatePortfolioDecreaseTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
-        this.portfolioUpdatedTotalQuantity = portfolioTotalQuantity - transactionStockQuantity; // 매도한 주식 수만큼 차감
-    }
-
-    // 포트폴리오 주식 총 금액 구하기: 매도 후 남은 개수에 포토폴리오 평균 단가 곱하기
-    public void calculatePortfolioDecreaseTotalAmount(BigDecimal portfolioAveragePrice) {
-        this.portfolioUpdatedTotalAmount = portfolioAveragePrice.multiply(BigDecimal.valueOf(this.portfolioUpdatedTotalQuantity));
     }
 
     // 주식 1개 손익 차이 금액

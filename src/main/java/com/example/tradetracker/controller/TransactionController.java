@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/transaction")
+@RequestMapping("/api/transaction/us")
 public class TransactionController {
 
     private final TransactionService TransactionService;
@@ -40,6 +40,20 @@ public class TransactionController {
         // 잘못된 형식으로 형태로 오면 오류 표시?!
 
         return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/buy/{transactionId}")
+    public ResponseEntity<TransactionResponseDto> deletePurchase(@PathVariable Long transactionId) {
+        log.info("주식 매도 기록 삭제");
+
+        // 서비스 층 판매 처리
+        TransactionResponseDto result = null;
+
+        this.TransactionService.deleteUsStockPurchaseTransaction(transactionId);
+
+        log.info("Transaction deleted for transactionId: {}", transactionId);
+
+        return ResponseEntity.ok().build();  // 삭제 성공 시 본문 없이 응답
     }
 
     @PostMapping("/sell")
