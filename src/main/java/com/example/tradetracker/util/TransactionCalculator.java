@@ -1,7 +1,9 @@
 package com.example.tradetracker.util;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -13,12 +15,9 @@ public class TransactionCalculator {
     private BigDecimal totalExecutedAmount;  // 채결한 주식 총 금액
     private BigDecimal transactionFee;       // 수수료
 
-    private int portfolioPurchaseTotalQuantity; // 매수 후 토폴리오 주식 개수
-    private BigDecimal portfolioPurchaseTotalAmount; // 매수 후 포토폴리오 총 주식 금액
-    private BigDecimal portfolioPurchaseAveragePrice; // 매수 후 포토폴리오 주식 평균 가격
-
-    private int portfolioSellTotalQuantity; // 매도 후 포토폴리오 주식 개수
-    private BigDecimal portfolioSellTotalAmount; // 매도 후 포토폴리오 총 주식 금액
+    private int portfolioUpdatedTotalQuantity; // 수정 후 포토폴리오 주식 개수
+    private BigDecimal portfolioUpdatedTotalAmount; // 수정 후 포토폴리오 총 주식 금액
+    private BigDecimal portfolioUpdatedAveragePrice; // 수정 후 포토폴리오 주식 평균 가격
 
     private BigDecimal profitOrLossPerStock; // 주식 1개 손익 차이 금액
     private BigDecimal profitOrLossTotalAmount; // 총 손익 차이 금액
@@ -34,12 +33,9 @@ public class TransactionCalculator {
         this.totalExecutedAmount = BigDecimal.ZERO;
         this.transactionFee = BigDecimal.ZERO;
 
-        this.portfolioPurchaseTotalQuantity = 0;
-        this.portfolioPurchaseTotalAmount = BigDecimal.ZERO;
-        this.portfolioPurchaseAveragePrice = BigDecimal.ZERO;
-
-        this.portfolioSellTotalQuantity = 0;
-        this.portfolioSellTotalAmount = BigDecimal.ZERO;
+        this.portfolioUpdatedTotalQuantity = 0;
+        this.portfolioUpdatedTotalAmount = BigDecimal.ZERO;
+        this.portfolioUpdatedAveragePrice = BigDecimal.ZERO;
 
         this.profitOrLossPerStock = BigDecimal.ZERO;
         this.profitOrLossTotalAmount = BigDecimal.ZERO;
@@ -51,6 +47,14 @@ public class TransactionCalculator {
         this.updatedInvestAmount = BigDecimal.ZERO;
     }
 
+    // setter 메서드
+    public void setTotalExecutedAmount(BigDecimal totalExecutedAmount) {
+        this.totalExecutedAmount = totalExecutedAmount;
+    }
+
+    public void setTransactionFee(BigDecimal transactionFee) {
+        this.transactionFee = transactionFee;
+    }
 
 
     // 총 채결 금액 계산 (가격 * 수량)
@@ -65,29 +69,29 @@ public class TransactionCalculator {
 
 
     //포토폴리오에 존재하는 기존 주식에 매수한 주식 개수 더하기
-    public void calculatePortfolioPurchaseTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
-        this.portfolioPurchaseTotalQuantity = portfolioTotalQuantity + transactionStockQuantity;
+    public void calculatePortfolioIncreaseTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
+        this.portfolioUpdatedTotalQuantity = portfolioTotalQuantity + transactionStockQuantity;
     }
 
     //포토폴리오에 존재하는 기존 주식에 매수한 주식 총 금액 더하기
-    public void calculatePortfolioPurchaseTotalAmount(BigDecimal portfolioTotalAmount) {
-        this.portfolioPurchaseTotalAmount = portfolioTotalAmount.add(this.totalExecutedAmount);
+    public void calculatePortfolioIncreaseTotalAmount(BigDecimal portfolioTotalAmount) {
+        this.portfolioUpdatedTotalAmount = portfolioTotalAmount.add(this.totalExecutedAmount);
     }
 
     // 포토폴리오 주식 평단가 구하기
-    public void calculatePortfolioPurchaseAveragePrice() {
-        this.portfolioPurchaseAveragePrice = this.portfolioPurchaseTotalAmount.divide(BigDecimal.valueOf(this.portfolioPurchaseTotalQuantity),
+    public void calculatePortfolioUpdatedAveragePrice() {
+        this.portfolioUpdatedAveragePrice = this.portfolioUpdatedTotalAmount.divide(BigDecimal.valueOf(this.portfolioUpdatedTotalQuantity),
                 RoundingMode.HALF_UP);
     }
 
     // 포트폴리오에서 매도 후 남은 주식 개수 계산
-    public void calculatePortfolioSellTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
-        this.portfolioSellTotalQuantity = portfolioTotalQuantity - transactionStockQuantity; // 매도한 주식 수만큼 차감
+    public void calculatePortfolioDecreaseTotalQuantity(Integer portfolioTotalQuantity, int transactionStockQuantity) {
+        this.portfolioUpdatedTotalQuantity = portfolioTotalQuantity - transactionStockQuantity; // 매도한 주식 수만큼 차감
     }
 
     // 포트폴리오 주식 총 금액 구하기: 매도 후 남은 개수에 포토폴리오 평균 단가 곱하기
-    public void calculatePortfolioSellTotalAmount(BigDecimal portfolioAveragePrice) {
-        this.portfolioSellTotalAmount = portfolioAveragePrice.multiply(BigDecimal.valueOf(this.portfolioSellTotalQuantity));
+    public void calculatePortfolioDecreaseTotalAmount(BigDecimal portfolioAveragePrice) {
+        this.portfolioUpdatedTotalAmount = portfolioAveragePrice.multiply(BigDecimal.valueOf(this.portfolioUpdatedTotalQuantity));
     }
 
     // 주식 1개 손익 차이 금액

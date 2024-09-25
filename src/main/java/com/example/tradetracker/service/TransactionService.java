@@ -103,17 +103,17 @@ public class TransactionService {
         // 포토폴리오에 새로 산 주식 추가
         if (existingPortfolio != null) {
             // 존재 O: 평균 단가 및 수량 업데이트
-            calculator.calculatePortfolioPurchaseTotalAmount(existingPortfolio.getTotalAmount());
-            calculator.calculatePortfolioPurchaseTotalQuantity(existingPortfolio.getQuantity(), request.getQuantity());
-            calculator.calculatePortfolioPurchaseAveragePrice();
+            calculator.calculatePortfolioIncreaseTotalQuantity(existingPortfolio.getQuantity(), request.getQuantity());
+            calculator.calculatePortfolioIncreaseTotalAmount(existingPortfolio.getTotalAmount());
+            calculator.calculatePortfolioUpdatedAveragePrice();
 //            BigDecimal totalAmount = existingPortfolio.getTotalAmount().add(calculator.getTotalExecutedAmount());
 //            BigDecimal totalQuantity = BigDecimal.valueOf(existingPortfolio.getQuantity()).add(BigDecimal.valueOf(request.getQuantity()));
 //            BigDecimal newAveragePrice = totalAmount.divide(totalQuantity, RoundingMode.HALF_UP);
 
             existingPortfolio = existingPortfolio
-                    .withQuantity(calculator.getPortfolioPurchaseTotalQuantity())
-                    .withTotalAmount(calculator.getPortfolioPurchaseTotalAmount())
-                    .withPrice(calculator.getPortfolioPurchaseAveragePrice());
+                    .withQuantity(calculator.getPortfolioUpdatedTotalQuantity())
+                    .withTotalAmount(calculator.getPortfolioUpdatedTotalAmount())
+                    .withPrice(calculator.getPortfolioUpdatedAveragePrice());
 
             portfolioUsdRepository.save(existingPortfolio);
         } else {
@@ -143,6 +143,49 @@ public class TransactionService {
                 .build();
     }
 
+    // 매수 주식 거래 기록 삭제 서비스 함수
+//    public void deleteUsStockPurchaseTransaction(){
+//        Long userId = 1L; // 임의의 사용자 ID 설정
+//        TransactionCalculator calculator = new TransactionCalculator();
+//
+//        // 유저 정보 조회
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        // transaction_id로 검색
+//        TransactionUsdEntity existingTransaction = transactionUsdRepository.findById(request.getTransactionId())
+//                .orElseThrow(() -> new RuntimeException("해당 트랜잭션을 찾을 수 없습니다."));
+//
+//        // 포토폴리오
+//        // 포트폴리오에서 해당 주식 정보 가져오기
+//        PortfolioUsdEntity existingPortfolio = portfolioUsdRepository.findByUserIdAndStockName(userId, request.getStockName());
+//
+//        // 포트폴리오에 해당 주식 없거나 수량이 적으면 오류
+//        if (existingPortfolio == null || existingPortfolio.getQuantity() < existingTransaction.getQuantity()) {
+//            throw new RuntimeException("포트폴리오에 주식이 없거나 매도 수량이 부족합니다.");
+//        }
+//
+//        // 해당 id 트랜젝션에서 가져옴
+//        calculator.setTotalExecutedAmount(existingTransaction.getTotalAmount());
+//        calculator.setTransactionFee((existingTransaction.getTransactionFee()));
+//
+//        // 포토폴리오 주식 개수에서 삭제 구입 주식 개수 뺌
+//        // 포토폴리오 총 주식 금액에서 삭제 구입 총 주식 금액 뺌
+//        // 수정 된 주식 개수와 총 금액을 통해 평균 단가 구함
+//
+//
+//        //유저
+//        // 시드머니: 수수료 뺀 거 다시 더하기
+//        // 투자 금액: 매수 한 금액 빼기
+//
+//        // 거래
+//        // 삭제
+//
+//
+//
+//
+//    }
+
     public TransactionResponseDto createUsStockSellTransaction (TransactionRequestDto request) {
         Long userId = 1L; // 임의의 사용자 ID 설정
         TransactionCalculator calculator = new TransactionCalculator();
@@ -166,8 +209,8 @@ public class TransactionService {
         }
 
         // 매도 후 포토폴리오 구하기
-        calculator.calculatePortfolioSellTotalQuantity(existingPortfolio.getQuantity(), request.getQuantity());
-        calculator.calculatePortfolioSellTotalAmount(existingPortfolio.getPrice());
+        calculator.calculatePortfolioDecreaseTotalQuantity(existingPortfolio.getQuantity(), request.getQuantity());
+        calculator.calculatePortfolioDecreaseTotalAmount(existingPortfolio.getPrice());
 
         // 손익 계산하기
         // 주식 1개 손익 차이 금액
@@ -179,11 +222,11 @@ public class TransactionService {
 
 
         // 포트폴리오 엔티티 업데이트
-        if (calculator.getPortfolioSellTotalQuantity() > 0) {
+        if (calculator.getPortfolioUpdatedTotalQuantity() > 0) {
             // 수량이 0보다 크면 업데이트
             existingPortfolio = existingPortfolio
-                    .withQuantity(calculator.getPortfolioSellTotalQuantity())
-                    .withTotalAmount(calculator.getPortfolioSellTotalAmount());
+                    .withQuantity(calculator.getPortfolioUpdatedTotalQuantity())
+                    .withTotalAmount(calculator.getPortfolioUpdatedTotalAmount());
             portfolioUsdRepository.save(existingPortfolio);
         } else {
             // 수량이 0이면 해당 포트폴리오 삭제
