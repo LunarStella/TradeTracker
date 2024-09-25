@@ -22,7 +22,7 @@ public class TransactionController {
     // 내가 주식을 산 것을 기록
     @PostMapping("/buy")
     public ResponseEntity<TransactionResponseDto> recordPurchase(@RequestBody TransactionRequestDto request){
-        log.info("주식 구입 기록 생성");
+        log.info("주식 매수 기록 생성");
 
         // **해당 값이 제대로 들어왔는지 filter 기능 만들기!!
 
@@ -32,6 +32,28 @@ public class TransactionController {
         // 미국 주식을 구매
         if("US".equals(request.getMarketType())){
           result = this.TransactionService.createUsStockPurchaseTransaction(request);
+        }
+
+
+        log.info("Transaction result: {}", result);
+
+        // 잘못된 형식으로 형태로 오면 오류 표시?!
+
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/sell")
+    public ResponseEntity<TransactionResponseDto> recordSell(@RequestBody TransactionRequestDto request){
+        log.info("주식 매도 기록 생성");
+
+        // **해당 값이 제대로 들어왔는지 filter 기능 만들기!!
+
+        TransactionResponseDto result = null;
+
+        // 서비스 층 구매 처리
+        // 미국 주식을 구매
+        if("US".equals(request.getMarketType())){
+            result = this.TransactionService.createUsStockSellTransaction(request);
         }
 
 

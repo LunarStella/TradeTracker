@@ -17,7 +17,7 @@ public class TransactionResponseDto {
     private String stockName; // 주식 종류
     private BigDecimal price; // 주식 가격
     private int quantity; // 주식 개수
-    private BigDecimal totalPurchaseAmount;
+    private BigDecimal totalExecutedAmount;
     private BigDecimal commissionValue; // 수수료 비율
     private LocalDate date; // 날짜
 }
