@@ -44,10 +44,7 @@ public class TransactionController {
 
     @DeleteMapping("/buy/{transactionId}")
     public ResponseEntity<TransactionResponseDto> deletePurchase(@PathVariable Long transactionId) {
-        log.info("주식 매도 기록 삭제");
-
-        // 서비스 층 판매 처리
-        TransactionResponseDto result = null;
+        log.info("주식 매수 기록 삭제");
 
         this.TransactionService.deleteUsStockPurchaseTransaction(transactionId);
 
@@ -77,4 +74,16 @@ public class TransactionController {
 
         return ResponseEntity.ok(result);
     }
+
+    @DeleteMapping("/sell/{transactionId}")
+    public ResponseEntity<TransactionResponseDto> deleteSell(@PathVariable Long transactionId) {
+        log.info("주식 매도 기록 삭제");
+
+        this.TransactionService.deleteUsStockSellTransaction(transactionId);
+
+        log.info("Transaction deleted for transactionId: {}", transactionId);
+
+        return ResponseEntity.ok().build();  // 삭제 성공 시 본문 없이 응답
+    }
+
 }

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 @Getter
+@Setter
 public class TransactionCalculator {
 
     // 업데이트된 시드머니
@@ -18,6 +19,9 @@ public class TransactionCalculator {
     private int portfolioUpdatedTotalQuantity; // 수정 후 포토폴리오 주식 개수
     private BigDecimal portfolioUpdatedTotalAmount; // 수정 후 포토폴리오 총 주식 금액
     private BigDecimal portfolioUpdatedAveragePrice; // 수정 후 포토폴리오 주식 평균 가격
+
+    private BigDecimal portfolioOriginalAveragePrice; // 포트폴리오 원래 주식 평균 가격
+    private BigDecimal portfolioOriginalTotalAmount; // 포트폴리오 원래 총 주식 금액
 
     private BigDecimal profitOrLossPerStock; // 주식 1개 손익 차이 금액
     private BigDecimal profitOrLossTotalAmount; // 총 손익 차이 금액
@@ -37,6 +41,9 @@ public class TransactionCalculator {
         this.portfolioUpdatedTotalAmount = BigDecimal.ZERO;
         this.portfolioUpdatedAveragePrice = BigDecimal.ZERO;
 
+        this.portfolioOriginalAveragePrice = BigDecimal.ZERO;
+        this.portfolioOriginalTotalAmount = BigDecimal.ZERO;
+
         this.profitOrLossPerStock = BigDecimal.ZERO;
         this.profitOrLossTotalAmount = BigDecimal.ZERO;
         this.priceDifferenceRatio = BigDecimal.ZERO;
@@ -47,14 +54,14 @@ public class TransactionCalculator {
         this.updatedInvestAmount = BigDecimal.ZERO;
     }
 
-    // setter 메서드
-    public void setTotalExecutedAmount(BigDecimal totalExecutedAmount) {
-        this.totalExecutedAmount = totalExecutedAmount;
-    }
-
-    public void setTransactionFee(BigDecimal transactionFee) {
-        this.transactionFee = transactionFee;
-    }
+//    // setter 메서드
+//    public void setTotalExecutedAmount(BigDecimal totalExecutedAmount) {
+//        this.totalExecutedAmount = totalExecutedAmount;
+//    }
+//
+//    public void setTransactionFee(BigDecimal transactionFee) {
+//        this.transactionFee = transactionFee;
+//    }
 
 
     // 총 채결 금액 계산 (가격 * 수량)
@@ -92,6 +99,14 @@ public class TransactionCalculator {
     public void calculatePortfolioUpdatedAveragePrice() {
         this.portfolioUpdatedAveragePrice = this.portfolioUpdatedTotalAmount.divide(BigDecimal.valueOf(this.portfolioUpdatedTotalQuantity),
                 RoundingMode.HALF_UP);
+    }
+
+    public void calculatePortfolioOriginalAveragePrice(BigDecimal transactionPrice, BigDecimal profitOrLossPerStock) {
+        this.portfolioOriginalAveragePrice = transactionPrice.subtract(profitOrLossPerStock);
+    }
+
+    public void calculatePortfolioOriginalTotalAmount(int transactionQuantity) {
+        this.portfolioOriginalTotalAmount = this.portfolioOriginalAveragePrice.multiply(BigDecimal.valueOf(transactionQuantity));
     }
 
     // 주식 1개 손익 차이 금액

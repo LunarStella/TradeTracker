@@ -4,11 +4,11 @@ package com.example.tradetracker.service;
 import com.example.tradetracker.dto.TransactionRequestDto;
 import com.example.tradetracker.dto.TransactionResponseDto;
 import com.example.tradetracker.model.PortfolioUsdEntity;
-import com.example.tradetracker.model.StockProfitUsdEntity;
+import com.example.tradetracker.model.StockProfitLossUsdEntity;
 import com.example.tradetracker.model.TransactionUsdEntity;
 import com.example.tradetracker.model.UserEntity;
 import com.example.tradetracker.repository.PortfolioUsdRepository;
-import com.example.tradetracker.repository.StockProfitUsdRepository;
+import com.example.tradetracker.repository.StockProfitLossUsdRepository;
 import com.example.tradetracker.repository.TransactionUsdRepository;
 import com.example.tradetracker.repository.UserRepository;
 import com.example.tradetracker.util.TransactionCalculator;
@@ -17,8 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.CacheRequest;
 import java.time.LocalDateTime;
 
 @Service
@@ -28,7 +26,7 @@ public class TransactionService {
     private final UserRepository userRepository;
     private final TransactionUsdRepository transactionUsdRepository;
     private final PortfolioUsdRepository portfolioUsdRepository;
-    private final StockProfitUsdRepository stockProfitUsdRepository;
+    private final StockProfitLossUsdRepository stockProfitLossUsdRepository;
 
     // 주식 매수
     public TransactionResponseDto createUsStockPurchaseTransaction (TransactionRequestDto request) {
@@ -221,10 +219,6 @@ public class TransactionService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 주식 총 매도 금액 계산 (가격 * 수량)
-        calculator.calculateTotalExecutedAmount(request.getPrice(),request.getQuantity());
-        // 수수료 계산 (매도 금액 * 수수료율)
-        calculator.calculateTransactionFee(request.getCommissionRate());
 
         // 포토폴리오
         // 포트폴리오에서 해당 주식 정보 가져오기
@@ -234,6 +228,11 @@ public class TransactionService {
         if (existingPortfolio == null || existingPortfolio.getQuantity() < request.getQuantity()) {
             throw new RuntimeException("포트폴리오에 주식이 없거나 매도 수량이 부족합니다.");
         }
+
+        // 주식 총 매도 금액 계산 (포토폴리오 가격 * 수량)
+        calculator.calculateTotalExecutedAmount(existingPortfolio.getPrice(),request.getQuantity());
+        // 수수료 계산 (매도 금액 * 수수료율)
+        calculator.calculateTransactionFee(request.getCommissionRate());
 
         // 매도 후 포토폴리오 구하기
         calculator.calculatePortfolioDecreaseTotalQuantity(existingPortfolio.getQuantity(), request.getQuantity());
@@ -276,7 +275,7 @@ public class TransactionService {
         transactionUsdRepository.save(transaction);
 
 
-        StockProfitUsdEntity stockProfit = StockProfitUsdEntity.builder()
+        StockProfitLossUsdEntity stockProfitLoss = StockProfitLossUsdEntity.builder()
                 .user(user) // UserEntity 인스턴스
                 .transaction(transaction) // TransactionUsdEntity 인스턴스
                 .isProfit(calculator.isProfit())
@@ -287,7 +286,7 @@ public class TransactionService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        stockProfitUsdRepository.save(stockProfit);
+        stockProfitLossUsdRepository.save(stockProfitLoss);
 
 
 
@@ -317,5 +316,78 @@ public class TransactionService {
                 .commissionValue(calculator.getTransactionFee())
                 .date(request.getDate())
                 .build();
+    }
+
+    //     매수 주식 거래 기록 삭제 서비스 함수
+    public void deleteUsStockSellTransaction(Long transactionId){
+        Long userId = 1L; // 임의의 사용자 ID 설정
+        TransactionCalculator calculator = new TransactionCalculator();
+
+        // 유저 정보 조회
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // transaction_id로 검색
+        TransactionUsdEntity existingTransaction = transactionUsdRepository.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("해당 트랜잭션을 찾을 수 없습니다."));
+
+        // 손익
+        StockProfitLossUsdEntity existingProfitLoss = stockProfitLossUsdRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new RuntimeException("해당 손익 기록을 찾을 수 없습니다."));
+
+        // 포토폴리오
+        // 포트폴리오에서 해당 주식 정보 가져오기
+        PortfolioUsdEntity existingPortfolio = portfolioUsdRepository.findByUserIdAndStockName(userId, existingTransaction.getStockName());
+
+        calculator.setTransactionFee((existingTransaction.getTransactionFee()));
+
+        // 포트폴리오에 주식이 존재 x
+        if (existingPortfolio == null) {
+            calculator.calculatePortfolioOriginalAveragePrice(existingTransaction.getTransactionPrice(),existingProfitLoss.getPerStockDiff());
+            calculator.calculatePortfolioOriginalTotalAmount(existingTransaction.getQuantity());
+
+            // 새로운 포트폴리오 항목 생성
+            PortfolioUsdEntity newPortfolio = PortfolioUsdEntity.builder()
+                    .user(user)
+                    .stockName(existingTransaction.getStockName())
+                    .price(calculator.getPortfolioOriginalAveragePrice())
+                    .quantity(existingTransaction.getQuantity())
+                    .totalAmount(calculator.getPortfolioOriginalTotalAmount())
+                    .build();
+
+            portfolioUsdRepository.save(newPortfolio);
+
+        } else {
+            // 포토폴리오 수정
+            // 나중에 REFECTORING 필요 !!
+            calculator.calculatePortfolioIncreaseTotalQuantity(existingPortfolio.getQuantity(), existingTransaction.getQuantity());
+            calculator.setPortfolioOriginalAveragePrice(existingPortfolio.getPrice());
+            calculator.calculatePortfolioOriginalTotalAmount(calculator.getPortfolioUpdatedTotalQuantity());
+
+
+            existingPortfolio = existingPortfolio
+                    .withQuantity(calculator.getPortfolioUpdatedTotalQuantity())
+                    .withTotalAmount(calculator.getPortfolioOriginalTotalAmount());
+
+            portfolioUsdRepository.save(existingPortfolio);
+        }
+
+
+        //유저
+        // 시드머니: 수수료 뺀 거 다시 더하기
+        // 투자 금액: 매수 한 금액 빼기
+        // REFACTORING 필요 !!
+        user = user
+                .withSeedMoneyUsd(user.getSeedMoneyUsd().subtract(existingProfitLoss.getCommissionInclusivePriceDiff()))
+                .withInvestmentAmountUsd(user.getInvestmentAmountUsd().add(existingTransaction.getTotalAmount()));
+
+        userRepository.save(user);
+
+        // 손익 레코드 삭제
+        stockProfitLossUsdRepository.delete(existingProfitLoss);
+
+        // 거래 레코드 삭제
+        transactionUsdRepository.delete(existingTransaction);
+
     }
 }

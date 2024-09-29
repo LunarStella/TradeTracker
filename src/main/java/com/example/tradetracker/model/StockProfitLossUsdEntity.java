@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(name = "stock_profit_loss_usd")
-public class StockProfitUsdEntity {
+public class StockProfitLossUsdEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,7 @@ public class StockProfitUsdEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "fk_user"))
     private UserEntity user;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "transaction_id", referencedColumnName = "id", nullable = false, foreignKey = @ForeignKey(name = "fk_transaction_usd"))
     private TransactionUsdEntity transaction;
 
