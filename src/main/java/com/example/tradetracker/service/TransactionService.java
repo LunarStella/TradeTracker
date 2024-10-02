@@ -11,6 +11,8 @@ import com.example.tradetracker.repository.PortfolioUsdRepository;
 import com.example.tradetracker.repository.StockProfitLossUsdRepository;
 import com.example.tradetracker.repository.TransactionUsdRepository;
 import com.example.tradetracker.repository.UserRepository;
+import com.example.tradetracker.response.CustomException;
+import com.example.tradetracker.response.ErrorCode;
 import com.example.tradetracker.util.TransactionCalculator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,7 +40,7 @@ public class TransactionService {
 
         // 유저 정보 조회
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_FOUND_USER));
 
         // 주식 총 매수 금액 계산 (가격 * 수량)
         calculator.calculateTotalExecutedAmount(request.getPrice(),request.getQuantity());
@@ -53,12 +55,12 @@ public class TransactionService {
         calculator.calculateUpdatedInvestAmount(user.getInvestmentAmountUsd(), request.getTransactionType());
 //        updatedSeedMoney = user.getSeedMoneyUsd().subtract(transactionFee);
         if (calculator.getUpdatedSeedMoney().compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("시드머니가 부족합니다.");
+            throw new CustomException(ErrorCode.INSUFFICIENT_SEED_MONEY);
         }
 
         // 투자 금액이 시드머니를 넘지 않도록 검증
         if (user.getInvestmentAmountUsd().compareTo(user.getSeedMoneyUsd()) > 0) {
-            throw new RuntimeException("투자 금액이 시드머니를 초과할 수 없습니다.");
+            throw new CustomException(ErrorCode.INVESTMENT_AMOUNT_EXCEEDS_SEED_MONEY);
         }
 
         // 유저의 시드머니 및 투자 금액 업데이트
@@ -148,11 +150,11 @@ public class TransactionService {
 
         // 유저 정보 조회
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_FOUND_USER));
 
         // transaction_id로 검색
         TransactionUsdEntity existingTransaction = transactionUsdRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("해당 트랜잭션을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_FOUND_TRANSACTION));
 
         // 포토폴리오
         // 포트폴리오에서 해당 주식 정보 가져오기
@@ -163,9 +165,9 @@ public class TransactionService {
         calculator.setTransactionFee((existingTransaction.getTransactionFee()));
 
 
-        // 포트폴리오에 해당 주식 없거나 수량이 적으면 오류
+        // 포트폴리오에 해당 주식 없으면 오류
         if (existingPortfolio == null) {
-            throw new RuntimeException("포트폴리오에 주식이 없습니다");
+            throw new CustomException(ErrorCode.ID_NOT_FOUND_PORTFOLIO);
         }
 
         // 포토폴리오 주식 개수에서 삭제 구입 주식 개수 뺌
@@ -191,7 +193,7 @@ public class TransactionService {
 
         } else{
             // 수량 초과
-            throw new RuntimeException("매도 수량이 포트폴리오 수량을 초과했습니다.");
+            throw new CustomException(ErrorCode.EXCESS_SELL_QUANTITY);
         }
 
 
@@ -217,7 +219,7 @@ public class TransactionService {
 
         // 유저 정보 조회
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->  new CustomException(ErrorCode.ID_NOT_FOUND_USER));
 
 
         // 포토폴리오
@@ -226,7 +228,7 @@ public class TransactionService {
 
         // 포트폴리오에 해당 주식 없거나 수량이 적으면 오류
         if (existingPortfolio == null || existingPortfolio.getQuantity() < request.getQuantity()) {
-            throw new RuntimeException("포트폴리오에 주식이 없거나 매도 수량이 부족합니다.");
+            throw new CustomException(ErrorCode.INSUFFICIENT_STOCK_QUANTITY);
         }
 
         // 주식 총 매도 금액 계산 (포토폴리오 가격 * 수량)
@@ -325,15 +327,15 @@ public class TransactionService {
 
         // 유저 정보 조회
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_FOUND_USER));
 
         // transaction_id로 검색
         TransactionUsdEntity existingTransaction = transactionUsdRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("해당 트랜잭션을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_FOUND_TRANSACTION));
 
         // 손익
         StockProfitLossUsdEntity existingProfitLoss = stockProfitLossUsdRepository.findByTransactionId(transactionId)
-                .orElseThrow(() -> new RuntimeException("해당 손익 기록을 찾을 수 없습니다."));
+                .orElseThrow(() ->  new CustomException(ErrorCode.ID_NOT_FOUND_PROFIT_LOSS));
 
         // 포토폴리오
         // 포트폴리오에서 해당 주식 정보 가져오기
