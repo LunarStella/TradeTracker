@@ -1,5 +1,6 @@
 package com.example.tradetracker.controller;
 
+import com.example.tradetracker.dto.PagingResponseDto;
 import com.example.tradetracker.dto.TransactionRequestDto;
 import com.example.tradetracker.dto.TransactionResponseDto;
 import com.example.tradetracker.response.ApiResponse;
@@ -9,19 +10,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 // 내가 사고 판 주식들을 관리 api
 @Slf4j
 @CrossOrigin
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/transaction/us")
+@RequestMapping("/api/transaction/")
 public class TransactionController {
 
     private final TransactionService TransactionService;
 
     // 내가 주식을 산 것을 기록
-    @PostMapping("/buy")
+    @PostMapping("us/buy")
     public ApiResponse<TransactionResponseDto> recordPurchase(@RequestBody TransactionRequestDto request){
         log.info("주식 매수 기록 생성");
 
@@ -41,7 +44,7 @@ public class TransactionController {
         return ApiResponse.ok(result);
     }
 
-    @DeleteMapping("/buy/{transactionId}")
+    @DeleteMapping("us/buy/{transactionId}")
     public ApiResponse<?> deletePurchase(@PathVariable Long transactionId) {
         log.info("주식 매수 기록 삭제");
 
@@ -52,7 +55,7 @@ public class TransactionController {
         return ApiResponse.ok(null);  // 삭제 성공 시 본문 없이 응답
     }
 
-    @PostMapping("/sell")
+    @PostMapping("us/sell")
     public ApiResponse<TransactionResponseDto> recordSell(@RequestBody TransactionRequestDto request){
         log.info("주식 매도 기록 생성");
 
@@ -72,7 +75,7 @@ public class TransactionController {
         return ApiResponse.ok(result);
     }
 
-    @DeleteMapping("/sell/{transactionId}")
+    @DeleteMapping("us/sell/{transactionId}")
     public ApiResponse<?> deleteSell(@PathVariable Long transactionId) {
         log.info("주식 매도 기록 삭제");
 
@@ -81,6 +84,19 @@ public class TransactionController {
         log.info("Transaction deleted for transactionId: {}", transactionId);
 
         return ApiResponse.ok(null);
+    }
+
+//     날짜 순으로 매수 매도 기록 조회 API
+    @GetMapping("date")
+    public ApiResponse<PagingResponseDto> getTransactionsSortedByDate(
+            @RequestParam String marketType,
+            @RequestParam int page) {
+
+        log.info("거래 기록 보기");
+        // 날짜 순으로 매수 매도 기록 조회 로직
+        PagingResponseDto<TransactionResponseDto> result = this.TransactionService.getTransactionsSortedByDate(page, marketType);
+
+        return ApiResponse.ok(result);
     }
 
 }

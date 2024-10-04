@@ -1,6 +1,7 @@
 package com.example.tradetracker.service;
 
 
+import com.example.tradetracker.dto.PagingResponseDto;
 import com.example.tradetracker.dto.TransactionRequestDto;
 import com.example.tradetracker.dto.TransactionResponseDto;
 import com.example.tradetracker.model.PortfolioUsdEntity;
@@ -15,11 +16,16 @@ import com.example.tradetracker.response.CustomException;
 import com.example.tradetracker.response.ErrorCode;
 import com.example.tradetracker.util.TransactionCalculator;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -130,17 +136,18 @@ public class TransactionService {
         }
 
         // 응답 DTO 생성 및 반환
-        return TransactionResponseDto.builder()
-                .transactionId(transaction.getId())
-                .marketType(request.getMarketType())
-                .transactionType(request.getTransactionType())
-                .stockName(request.getStockName())
-                .price(request.getPrice())
-                .quantity(request.getQuantity())
-                .totalExecutedAmount(calculator.getTotalExecutedAmount())
-                .commissionValue(calculator.getTransactionFee())
-                .date(request.getDate())
-                .build();
+        return new TransactionResponseDto(
+                transaction.getId(),
+                request.getMarketType(),
+                request.getTransactionType(),
+                request.getStockName(),
+                request.getPrice(),
+                request.getQuantity(),
+                calculator.getTotalExecutedAmount(),
+                calculator.getTransactionFee(),
+                request.getDate()
+        );
+
     }
 
 //     매수 주식 거래 기록 삭제 서비스 함수
@@ -307,17 +314,17 @@ public class TransactionService {
 
 
         // 응답 DTO 생성 및 반환
-        return TransactionResponseDto.builder()
-                .transactionId(transaction.getId())
-                .marketType(request.getMarketType())
-                .transactionType(request.getTransactionType())
-                .stockName(request.getStockName())
-                .price(request.getPrice())
-                .quantity(request.getQuantity())
-                .totalExecutedAmount(calculator.getTotalExecutedAmount())
-                .commissionValue(calculator.getTransactionFee())
-                .date(request.getDate())
-                .build();
+        return new TransactionResponseDto(
+                transaction.getId(),
+                request.getMarketType(),
+                request.getTransactionType(),
+                request.getStockName(),
+                request.getPrice(),
+                request.getQuantity(),
+                calculator.getTotalExecutedAmount(),
+                calculator.getTransactionFee(),
+                request.getDate()
+        );
     }
 
     //     매수 주식 거래 기록 삭제 서비스 함수
@@ -392,4 +399,54 @@ public class TransactionService {
         transactionUsdRepository.delete(existingTransaction);
 
     }
+
+    // 날짜 순으로 매수 매도 기록 조회
+    public PagingResponseDto<TransactionResponseDto> getTransactionsSortedByDate(int page, String marketType) {
+        Long userId = 1L; // 임의의 사용자 ID 설정
+        Pageable pageable = PageRequest.of(page, 10);
+        Page<TransactionUsdEntity> transactionPage;
+
+        // 유저 정보 조회
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ID_NOT_FOUND_USER));
+
+        // marketType에 따라 거래 기록을 조회
+       if ("US".equals(marketType)) {
+           transactionPage = transactionUsdRepository.findAllByUserIdOrderByTransactionDateDesc(userId, pageable);
+        } else {
+            throw new IllegalArgumentException("유효하지 않은 시장 유형입니다.");
+        }
+
+
+        // TransactionResponseDto로 변환
+        List<TransactionResponseDto> transactionResponses = transactionPage.getContent().stream()
+                .map(transaction -> new TransactionResponseDto(
+                        transaction.getId(),
+                        marketType,
+                        transaction.getTransactionType().name(),
+                        transaction.getStockName(),
+                        transaction.getTransactionPrice(),
+                        transaction.getQuantity(),
+                        transaction.getTotalAmount(),
+                        transaction.getTransactionFee(),
+                        transaction.getTransactionDate()
+                ))
+                .collect(Collectors.toList());
+
+        // 페이지 정보 추출
+        int currentPage = transactionPage.getNumber(); // 현재 페이지 번호
+        boolean hasNext = transactionPage.hasNext(); // 다음 페이지 여부
+        int totalPages = transactionPage.getTotalPages(); // 전체 페이지 수
+
+        // PagingResponseDto 생성
+        PagingResponseDto<TransactionResponseDto> pagingResponse = new PagingResponseDto<>(
+                currentPage,
+                hasNext,
+                totalPages,
+                transactionResponses
+                );
+
+        return pagingResponse;
+    }
+
 }
